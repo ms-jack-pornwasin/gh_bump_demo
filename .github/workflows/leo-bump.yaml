@@ -1,0 +1,90 @@
+# name: Bump Version & Tag
+
+# on:
+#   workflow_dispatch: # Enables manual trigger
+#     inputs:
+#       increment_type: # User chooses the type of version increment
+#         description: "Choose the version to increment (major, minor, patch)"
+#         required: true
+#         type: choice
+#         options:
+#           - major
+#           - minor
+#           - patch
+
+# jobs:
+#   bump_and_tag_version:
+#     name: Bump Version and Create Tag
+#     runs-on: ubuntu-latest
+#     strategy:
+#       matrix:
+#         python-version: ["3.12"]
+#     steps:
+#       - uses: actions/create-github-app-token@v2
+#         id: app-token
+#         with:
+#           app-id: ${{ secrets.GH_ACTIONS_BOT_APP_ID }}
+#           private-key: ${{ secrets.GH_ACTIONS_BOT_PRIVATE_KEY }}
+  
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+#         with:
+#           ref: main  # Makes sure we're on the `main` branch
+
+#       - name: Set up Python ${{ matrix.python-version }}
+#         uses: actions/setup-python@v2
+#         with:
+#           python-version: ${{ matrix.python-version }}
+
+#       - name: Install Dependencies
+#         run: |
+#           python -m pip install --upgrade pip
+#           pip install bump2version
+
+#       - name: Configure git
+#         run: |
+#           git config user.name "github-actions[bot]"
+#           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+#       - name: Switch branch, bump version, commit
+#         env: # Use GitHub Actions default bot credentials
+#           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+#         run: |
+#           CURRENT_VERSION=$(cat pyproject.toml | grep '^version' | awk -F '=' '{print $2}' | tr -d ' "')
+
+#           git checkout -b "upgrade-from-$CURRENT_VERSION-$RANDOM"
+
+#           echo "Bumping version: ${{ github.event.inputs.increment_type }} from $CURRENT_VERSION"
+#           bump2version --current-version "$CURRENT_VERSION" ${{ github.event.inputs.increment_type }} pyproject.toml --commit
+
+#           git push -u origin HEAD
+
+#       - name: Create PR
+#         env:
+#           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+#         run: |
+#           PR_TITLE=$(git log -1 --pretty=%B)
+#           gh pr create --fill --base main
+#         shell: bash
+
+#       - name: Merge PR
+#         env:
+#           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+#         run: |
+#           PR_NUMBER=$(gh pr list --state open --limit 1 --json number --jq '.[0].number')
+
+#           git config user.name "github-actions[bot]"
+#           git config user.email "github-actions[bot]@users.noreply.github.com"
+#           gh pr merge $PR_NUMBER --squash
+#         shell: bash
+
+#       - name: Switch to main, push tags
+#         env: # Use GitHub Actions default bot credentials
+#           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+#         run: |
+#           NEXT_VERSION=$(cat pyproject.toml | grep '^version' | awk -F '=' '{print $2}' | tr -d ' "')
+
+#           git checkout main
+#           git pull
+#           git tag "v$NEXT_VERSION"
+#           git push origin tag "v$NEXT_VERSION"

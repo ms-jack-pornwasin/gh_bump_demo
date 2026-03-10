@@ -1,0 +1,55 @@
+# name: build-and-publish-docker-image
+
+# on:
+#   release:
+#     types: [published]
+
+# env:
+#   AWS_ACCOUNT_NO: 664418998830
+#   AWS_REGION: ap-southeast-1
+#   AWS_ECR_REPO: jd-autotrading-app
+
+# jobs:
+#   build-and-publish-docker-image:
+#     runs-on: ubuntu-latest
+#     permissions:
+#       contents: read
+#       id-token: write
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+#       - name: Setup SSH keys
+#         uses: webfactory/ssh-agent@v0.9.0
+#         with:
+#           ssh-private-key: |
+#             ${{ secrets.G_ACTIONS_UTILS_KEY }}
+#             ${{ secrets.G_ACTIONS_API_KEY }}
+#             ${{ secrets.G_ACTIONS_PYTRADE_KEY }}
+#       - name: Collect Git and SSH config files in a directory that is part of the Docker build context
+#         run: |
+#           mkdir root-config
+#           cp -r ~/.gitconfig  ~/.ssh root-config/
+#       - name: Configure AWS credentials
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_NO }}:role/GHActions
+#           aws-region: ${{ env.AWS_REGION }}
+#       - name: Log in to Amazon ECR
+#         uses: aws-actions/amazon-ecr-login@v2
+#       - name: Extract metadata (tags, labels) for Docker
+#         id: meta
+#         uses: docker/metadata-action@v5
+#         with:
+#           images: ${{ env.AWS_ACCOUNT_NO }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.AWS_ECR_REPO }}
+#       - name: Build and push Docker image
+#         id: push
+#         uses: docker/build-push-action@v6
+#         with:
+#           context: .
+#           build-args: |
+#             GITHUB_ACTIONS=1
+#           ssh: |
+#             default=${{ env.SSH_AUTH_SOCK }}
+#           push: true
+#           tags: ${{ steps.meta.outputs.tags }}
+#           labels: ${{ steps.meta.outputs.labels }}
