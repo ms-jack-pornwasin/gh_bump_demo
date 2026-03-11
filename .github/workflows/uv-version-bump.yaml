@@ -1,4 +1,4 @@
-name: UV version bump 
+name:  uv-version-bump 
 
 on:
   workflow_dispatch:
@@ -74,5 +74,5 @@ jobs:
           git push origin "v$VERSION"
 
           gh release create "v$VERSION" \
-          --title "Release v$VERSION" \
+          --title "v$VERSION" \
           --generate-notes
