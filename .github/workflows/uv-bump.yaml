@@ -38,7 +38,7 @@ jobs:
           uv version --bump ${{ github.event.inputs.bump }}
           echo "new_version=$(uv version --short)" >> $GITHUB_OUTPUT
 
-      - name: Create PR with changes
+      - name: Commit Change, Create PR and Merge
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           VERSION: ${{ steps.uv-bump.outputs.new_version }}
@@ -60,3 +60,15 @@ jobs:
             --base main)
 
           gh pr merge "$PR_URL" --squash
+
+      - name: Tag and Push
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          VERSION: ${{ steps.uv-bump.outputs.new_version }}
+        run: |
+          git fetch origin main
+          git checkout main
+          git pull origin main
+          
+          git tag "v$VERSION"
+          git push origin "v$VERSION"
