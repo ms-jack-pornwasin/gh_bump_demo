@@ -1,0 +1,17 @@
+name: build-and-publish-docker-image
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-and-publish-docker-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Run a Dummy Script
+        run: echo "Hello! This is a dummy GitHub Action running."

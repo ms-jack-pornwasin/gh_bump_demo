@@ -61,7 +61,7 @@ jobs:
 
           gh pr merge "$PR_URL" --squash
 
-      - name: Tag and Push
+      - name: Tag, Push and Release
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           VERSION: ${{ steps.uv-bump.outputs.new_version }}
